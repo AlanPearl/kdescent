@@ -1,0 +1,42 @@
+[project]
+name = "kdescent"
+authors = [
+    {name = "Alan Pearl", email = "alanpearl13@gmail.com"}
+]
+description = "Stochastic gradient descent via mini-batched KDE"
+requires-python = ">=3.9"
+license = {file = "LICENSE.rst"}
+classifiers = ["Programming Language :: Python :: 3"]
+dynamic = ["dependencies", "version"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[project.urls]
+home = "https://github.com/AlanPearl/kdescent"
+
+[tool.setuptools_scm]
+write_to = "kdescent/_version.py"
+write_to_template = "__version__ = '{version}'"
+
+[tool.setuptools]
+include-package-data = true
+packages = {find = {exclude=["tests*", "scripts*", "docs*", "notebooks*"]}}
+package-dir = {kdescent = "kdescent"}
+
+[build-system]
+requires = [
+    "setuptools",
+    "setuptools_scm",
+    "tomli; python_version >= '3.9'",
+]
+build-backend = "setuptools.build_meta"
+
+[tool.flake8]
+ignore = []
+per-file-ignores = [
+    "__init__.py:F401",
+    "__init__.py:F403",
+]
+max-line-length = 79
+count = true

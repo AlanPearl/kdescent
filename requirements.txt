@@ -1,0 +1,4 @@
+jax
+jaxopt
+optax
+tqdm
