@@ -10,26 +10,32 @@ import optax
 from .keygen import KeyGenerator
 
 
-def adam_bounded(lossfunc, init_params, param_bounds, maxiter=100,
-                 learning_rate=1e-3, randkey=None, **other_kwargs):
+def adam(lossfunc, init_params, maxiter=100, param_bounds=None,
+         learning_rate=0.05, randkey=1, **other_kwargs):
+    if param_bounds is None:
+        return adam_unbounded(lossfunc, init_params, maxiter,
+                              learning_rate, randkey, **other_kwargs)
+
     assert len(init_params) == len(param_bounds)
-    param_bounds = [b if b is None else tuple(b.tolist())
-                    for b in param_bounds]
+    if hasattr(param_bounds, "tolist"):
+        param_bounds = param_bounds.tolist()
+    param_bounds = [b if b is None else tuple(b) for b in param_bounds]
 
     def ulossfunc(uparams, *args, **kwargs):
         params = apply_inverse_transforms(uparams, param_bounds)
         return lossfunc(params, *args, **kwargs)
 
     init_uparams = apply_transforms(init_params, param_bounds)
-    uparams, state = adam(ulossfunc, init_uparams, maxiter, learning_rate,
-                          randkey, **other_kwargs)
+    uparams, state = adam_unbounded(
+        ulossfunc, init_uparams, maxiter, learning_rate,
+        randkey, **other_kwargs)
     params = apply_inverse_transforms(uparams.T, param_bounds).T
 
     return params, state
 
 
-def adam(lossfunc, init_params, maxiter=100,
-         learning_rate=1e-3, randkey=None, **other_kwargs):
+def adam_unbounded(lossfunc, init_params, maxiter=100,
+                   learning_rate=1e-3, randkey=1, **other_kwargs):
     lossfunc_kwargs = {**other_kwargs}
     if randkey is not None:
         randkey = KeyGenerator(randkey)
