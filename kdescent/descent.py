@@ -10,10 +10,38 @@ import optax
 from .keygen import KeyGenerator
 
 
-def adam(lossfunc, init_params, maxiter=100, param_bounds=None,
+def adam(lossfunc, init_params, n_iter=100, param_bounds=None,
          learning_rate=0.05, randkey=1, **other_kwargs):
+    """
+    Perform gradient descent
+
+    Parameters
+    ----------
+    lossfunc : callable
+        Function to be minimized via gradient descent. Must be compatible with
+        jax.jit and jax.grad.
+    init_params : array-like
+        Initial guess in parameter space
+    n_iter : int, optional
+        Number of gradient descent iterations to perform, by default 100
+    param_bounds : Sequence, optional
+        Lower and upper bounds of each parameter, by default None
+    learning_rate : float, optional
+        Initial Adam learning rate, by default 0.05
+    randkey : int, optional
+        Random seed or key, by default 1. Setting randkey=None assumes
+        a lossfunc of signature f(param), otherwise f(param, randkey)
+
+    Returns
+    -------
+    params : jnp.array
+        List of params throughout the entire gradient descent, of shape
+        (n_iter, n_param)
+    state : OptaxState
+        Contains information about the final state of the gradient descent
+    """
     if param_bounds is None:
-        return adam_unbounded(lossfunc, init_params, maxiter,
+        return adam_unbounded(lossfunc, init_params, n_iter,
                               learning_rate, randkey, **other_kwargs)
 
     assert len(init_params) == len(param_bounds)
@@ -27,14 +55,14 @@ def adam(lossfunc, init_params, maxiter=100, param_bounds=None,
 
     init_uparams = apply_transforms(init_params, param_bounds)
     uparams, state = adam_unbounded(
-        ulossfunc, init_uparams, maxiter, learning_rate,
+        ulossfunc, init_uparams, n_iter, learning_rate,
         randkey, **other_kwargs)
     params = apply_inverse_transforms(uparams.T, param_bounds).T
 
     return params, state
 
 
-def adam_unbounded(lossfunc, init_params, maxiter=100,
+def adam_unbounded(lossfunc, init_params, n_iter=100,
                    learning_rate=1e-3, randkey=1, **other_kwargs):
     lossfunc_kwargs = {**other_kwargs}
     if randkey is not None:
@@ -42,10 +70,10 @@ def adam_unbounded(lossfunc, init_params, maxiter=100,
         lossfunc_kwargs["randkey"] = randkey.randkey
     opt = optax.adam(learning_rate)
     solver = jaxopt.OptaxSolver(
-        opt=opt, fun=lossfunc, maxiter=maxiter)
+        opt=opt, fun=lossfunc, maxiter=n_iter)
     state = solver.init_state(init_params, **lossfunc_kwargs)
     params = [init_params]
-    for _ in tqdm.trange(maxiter):
+    for _ in tqdm.trange(n_iter):
         if randkey is not None:
             randkey = randkey.with_newkey()
             lossfunc_kwargs["randkey"] = randkey.randkey

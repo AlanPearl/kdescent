@@ -4,6 +4,8 @@ import jax.numpy as jnp
 
 @jax.tree_util.register_pytree_node_class
 class KeyGenerator:
+    """Class for initializing and generating new jax random keys"""
+
     def __init__(self, randkey=0):
         self.randkey = _init_randkey(randkey)
 
