@@ -7,7 +7,7 @@ import jax.numpy as jnp
 import jaxopt
 import optax
 
-from .keygen import KeyGenerator
+from . import keygen
 
 
 def adam(lossfunc, init_params, n_iter=100, param_bounds=None,
@@ -19,7 +19,7 @@ def adam(lossfunc, init_params, n_iter=100, param_bounds=None,
     ----------
     lossfunc : callable
         Function to be minimized via gradient descent. Must be compatible with
-        jax.jit and jax.grad.
+        jax.jit and jax.grad. Must have signature f(params, **other_kwargs)
     init_params : array-like
         Initial guess in parameter space
     n_iter : int, optional
@@ -29,8 +29,8 @@ def adam(lossfunc, init_params, n_iter=100, param_bounds=None,
     learning_rate : float, optional
         Initial Adam learning rate, by default 0.05
     randkey : int, optional
-        Random seed or key, by default 1. Setting randkey=None assumes
-        a lossfunc of signature f(param), otherwise f(param, randkey)
+        Random seed or key, by default 1. If not None, lossfunc must accept
+        the "randkey" keyword argument, e.g. `lossfunc(params, randkey=key)`
 
     Returns
     -------
@@ -64,21 +64,19 @@ def adam(lossfunc, init_params, n_iter=100, param_bounds=None,
 
 def adam_unbounded(lossfunc, init_params, n_iter=100,
                    learning_rate=1e-3, randkey=1, **other_kwargs):
-    lossfunc_kwargs = {**other_kwargs}
+    kwargs = {**other_kwargs}
     if randkey is not None:
-        randkey = KeyGenerator(randkey)
-        lossfunc_kwargs["randkey"] = randkey.randkey
+        randkey = keygen.init_randkey(randkey)
+        kwargs["randkey"] = randkey
     opt = optax.adam(learning_rate)
-    solver = jaxopt.OptaxSolver(
-        opt=opt, fun=lossfunc, maxiter=n_iter)
-    state = solver.init_state(init_params, **lossfunc_kwargs)
+    solver = jaxopt.OptaxSolver(opt=opt, fun=lossfunc, maxiter=n_iter)
+    state = solver.init_state(init_params, **kwargs)
     params = [init_params]
     for _ in tqdm.trange(n_iter):
         if randkey is not None:
-            randkey = randkey.with_newkey()
-            lossfunc_kwargs["randkey"] = randkey.randkey
-        params_i, state = solver.update(
-            params[-1], state, **lossfunc_kwargs)
+            randkey = keygen.gen_new_key(randkey)
+            kwargs["randkey"] = randkey
+        params_i, state = solver.update(params[-1], state, **kwargs)
         params.append(params_i)
 
     return jnp.array(params), state
