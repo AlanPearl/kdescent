@@ -4,9 +4,9 @@ import jax.random
 import jax.numpy as jnp
 
 
-class KDE:
-    def __init__(self, training_x, num_kernels=20, bandwidth_factor=1.0,
-                 training_weights=None, num_fourier_kernels=20,
+class KCalc:
+    def __init__(self, training_x, training_weights=None, num_kernels=20,
+                 bandwidth_factor=1.0, num_fourier_kernels=20,
                  fourier_range_factor=10.0, comm=None):
         """
         This KDE object is the fundamental building block of kdescent. It
@@ -17,12 +17,12 @@ class KDE:
         ----------
         training_x : array-like
             Training data of shape (n_data, n_features)
+        training_weights : array-like, optional
+            Training weights of shape (n_data,), by default None
         num_kernels : int, optional
             Number of KDE kernels to appriximate the PDF, by default 20
         bandwidth_factor : float, optional
             Increase or decrease the kernel bandwidth, by default 1.0
-        training_weights : array-like, optional
-            Training weights of shape (n_data,), by default None
         num_fourier_kernels : int, optional
             Number of points in k-space to evaluate the ECF, by default 20
         fourier_range_factor : float, optional
@@ -48,7 +48,7 @@ class KDE:
         self.k_max = (fourier_range_factor
                       / self.training_x.std(ddof=1, axis=0))
 
-    def compare_counts(self, randkey, x, weights=None):
+    def compare_kde_counts(self, randkey, x, weights=None):
         """
         Realize kernel centers and return all kernel-weighted counts
 
