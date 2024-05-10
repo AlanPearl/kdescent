@@ -69,9 +69,9 @@ class KCalc:
             KDE counts measured on `training_x`. This is always different
             due to the random kernel placements. Has shape (num_kernels,)
         """
-        kernel_inds = self.realize_kernels(randkey)
-        prediction = self.calc_realized_counts(kernel_inds, x, weights)
-        truth = self.calc_realized_training_counts(kernel_inds)
+        kde_kernels = self.realize_kde_kernels(randkey)
+        prediction = self.calc_realized_kde(kde_kernels, x, weights)
+        truth = self.calc_realized_training_kde(kde_kernels)
         return prediction, truth
 
     def compare_fourier_counts(self, randkey, x, weights=None):
@@ -96,12 +96,12 @@ class KCalc:
             CF evaluations measured on `training_x`. This is always different
             due to the random evaluation kernels. Has shape (num_kernels,)
         """
-        k_kernels = self.realize_fourier(randkey)
-        prediction = self.calc_realized_fourier(k_kernels, x, weights)
-        truth = self.calc_realized_training_fourier(k_kernels)
+        fourier_kernels = self.realize_fourier_kernels(randkey)
+        prediction = self.calc_realized_fourier(fourier_kernels, x, weights)
+        truth = self.calc_realized_training_fourier(fourier_kernels)
         return prediction, truth
 
-    def realize_kernels(self, randkey):
+    def realize_kde_kernels(self, randkey):
         if self.comm is None:
             return _sample_kernel_inds(
                 self.num_kernels, self.training_x, randkey)
@@ -112,7 +112,7 @@ class KCalc:
                     self.num_kernels, self.training_x, randkey)
             return self.comm.bcast(kernel_inds, root=0)
 
-    def realize_fourier(self, randkey):
+    def realize_fourier_kernels(self, randkey):
         if self.comm is None:
             return _sample_fourier(
                 self.num_fourier_kernels, self.k_max, randkey)
@@ -127,20 +127,20 @@ class KCalc:
         return _get_weights(
             x, self.training_x, self.kernelcov, kernel_inds)
 
-    def calc_realized_counts(self, kernel_inds, x, weights=None):
+    def calc_realized_kde(self, kernel_inds, x, weights=None):
         return _predict_kdestat(
             x, weights, self.training_x, self.kernelcov, kernel_inds)
 
-    def calc_realized_training_counts(self, kernel_inds):
-        return self.calc_realized_counts(
+    def calc_realized_training_kde(self, kernel_inds):
+        return self.calc_realized_kde(
             kernel_inds, self.training_x, self.training_weights)
 
-    def calc_realized_fourier(self, k_kernels, x, weights=None):
-        return _predict_fourier(x, weights, k_kernels)
+    def calc_realized_fourier(self, fourier_kernels, x, weights=None):
+        return _predict_fourier(x, weights, fourier_kernels)
 
-    def calc_realized_training_fourier(self, k_kernels):
+    def calc_realized_training_fourier(self, fourier_kernels):
         return self.calc_realized_fourier(
-            k_kernels, self.training_x, self.training_weights)
+            fourier_kernels, self.training_x, self.training_weights)
 
     def _set_bandwidth(self, bandwidth_factor):
         """Scott's rule bandwidth... multiplied by any factor you want!"""
