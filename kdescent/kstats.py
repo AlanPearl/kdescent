@@ -104,12 +104,14 @@ class KCalc:
     def realize_kde_kernels(self, randkey):
         if self.comm is None:
             return _sample_kernel_inds(
-                self.num_kernels, self.training_x, randkey)
+                self.num_kernels, self.training_x,
+                self.training_weights, randkey)
         else:
             kernel_inds = []
             if not self.comm.rank:
                 kernel_inds = _sample_kernel_inds(
-                    self.num_kernels, self.training_x, randkey)
+                    self.num_kernels, self.training_x,
+                    self.training_weights, randkey)
             return self.comm.bcast(kernel_inds, root=0)
 
     def realize_fourier_kernels(self, randkey):
@@ -158,9 +160,9 @@ class KCalc:
 
 
 @partial(jax.jit, static_argnums=[0])
-def _sample_kernel_inds(num_kernels, training_x, randkey):
-    inds = jax.random.randint(
-        randkey, (num_kernels,), 0, len(training_x))
+def _sample_kernel_inds(num_kernels, training_x, training_weights, randkey):
+    inds = jax.random.choice(
+        randkey, len(training_x), (num_kernels,), p=training_weights)
     return inds
 
 
