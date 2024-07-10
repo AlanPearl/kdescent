@@ -25,7 +25,8 @@ def adam(lossfunc, guess, nsteps=100, param_bounds=None,
     nsteps : int, optional
         Number of gradient descent iterations to perform, by default 100
     param_bounds : Sequence, optional
-        Lower and upper bounds of each parameter, by default None
+        Lower and upper bounds of each parameter of "shape" (ndim, 2). Pass
+        `None` as the bound for each unbounded parameter, by default None
     learning_rate : float, optional
         Initial Adam learning rate, by default 0.05
     randkey : int, optional
@@ -68,10 +69,10 @@ def adam_unbounded(lossfunc, guess, nsteps=100,
         randkey, key_i = jax.random.split(randkey)
         kwargs["randkey"] = key_i
     opt = optax.adam(learning_rate)
-    solver = jaxopt.OptaxSolver(opt=opt, fun=lossfunc, nsteps=nsteps)
+    solver = jaxopt.OptaxSolver(opt=opt, fun=lossfunc, maxiter=nsteps)
     state = solver.init_state(guess, **kwargs)
     params = [guess]
-    for _ in tqdm.trange(nsteps):
+    for _ in tqdm.trange(nsteps, desc="Adam Gradient Descent Progress"):
         if randkey is not None:
             randkey, key_i = jax.random.split(randkey)
             kwargs["randkey"] = key_i

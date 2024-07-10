@@ -29,7 +29,10 @@ class KCalc:
             Increase or decrease the Fourier search space, by default 10.0
         comm : MPI Communicator, optional
             For parallel computing, this guarantees consistent kernel
-            placements within a shared comm, by default None
+            placements by all MPI ranks within the comm, by default None.
+            WARNING: Do not pass in an MPI communicator if you plan on wrapping
+            kernel drawing with a JIT-compiled function. In this case, be very
+            careful to pass identical randkeys for each MPI rank
         """
         self.training_x = jnp.atleast_2d(jnp.asarray(training_x).T).T
         assert self.training_x.ndim == 2, "x must have shape (ndata, ndim)"
