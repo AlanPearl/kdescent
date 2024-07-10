@@ -3,3 +3,4 @@ IPython
 matplotlib
 seaborn
 tqdm
+ipykernel
