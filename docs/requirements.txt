@@ -1,0 +1,5 @@
+nbsphinx
+IPython
+matplotlib
+seaborn
+tqdm
