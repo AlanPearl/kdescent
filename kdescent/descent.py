@@ -11,7 +11,7 @@ from . import keygen
 
 
 def adam(lossfunc, guess, nsteps=100, param_bounds=None,
-         learning_rate=0.05, randkey=1, **other_kwargs):
+         learning_rate=0.01, randkey=1, **other_kwargs):
     """
     Perform gradient descent
 
@@ -62,7 +62,7 @@ def adam(lossfunc, guess, nsteps=100, param_bounds=None,
 
 
 def adam_unbounded(lossfunc, guess, nsteps=100,
-                   learning_rate=1e-3, randkey=1, **other_kwargs):
+                   learning_rate=0.01, randkey=1, **other_kwargs):
     kwargs = {**other_kwargs}
     if randkey is not None:
         randkey = keygen.init_randkey(randkey)
