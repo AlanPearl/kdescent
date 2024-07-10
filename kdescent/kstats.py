@@ -77,7 +77,7 @@ class KCalc:
     def compare_fourier_counts(self, randkey, x, weights=None):
         """
         Return randomly-placed evaluations of the ECF
-        ECF = Empirical Characteristic Function = Fourier-transformed PDF
+        (Empirical Characteristic Function = Fourier-transformed PDF)
 
         Parameters
         ----------
@@ -85,8 +85,8 @@ class KCalc:
             Model data of shape (n_model_data, n_features)
         weights : array-like, optional
             Effective counts with shape (n_model_data,). If supplied,
-            function will return sum(weights * exp^(...)) at each evaluation
-            in k-space instead of simply sum(exp^(...))
+            the ECF will be weighted as sum(weights * exp^(...)) at each
+            evaluation in k-space instead of simply sum(exp^(...))
 
         Returns
         -------
