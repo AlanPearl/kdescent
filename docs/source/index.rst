@@ -12,8 +12,8 @@ Welcome to kdescent's documentation!
 
    installation.rst
    notebooks/intro.ipynb
-   notebooks/integration.ipynb
    notebooks/hmf_upweight.ipynb
+   notebooks/integration.ipynb
    reference.rst
 
 Indices and tables

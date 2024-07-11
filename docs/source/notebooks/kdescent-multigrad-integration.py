@@ -1,5 +1,5 @@
 """
-kdescent-multidiff-integration.py
+kdescent-multigrad-integration.py
 """
 
 import functools
@@ -12,7 +12,7 @@ import seaborn as sns
 from mpi4py import MPI
 
 import kdescent
-import multidiff
+import multigrad
 
 comm = MPI.COMM_WORLD
 
@@ -287,7 +287,7 @@ def soft_tophat(x, low, high, squish=25.0):
     return left * right
 
 
-# NOTE: For MultiDiff, we have to explicitly define sumstats_from_params()
+# NOTE: For multigrad, we have to explicitly define sumstats_from_params()
 # and loss_from_sumstats() to replace the old lossfunc()
 @jax.jit
 def sumstats_from_params(params, randkey):
@@ -388,7 +388,7 @@ def loss_from_sumstats(sumstats, sumstats_aux):
     truth_massfunc = jnp.array([training_w_highmass.sum(),]) / volume
 
     # Must abs() the Fourier residuals so that the loss is real
-    # NOTE: We even have to abs() the PDF residuals due to MultiDiff
+    # NOTE: We even have to abs() the PDF residuals due to multigrad
     # combining all sumstats into a single complex-typed array
     sqerrs = jnp.abs(jnp.concatenate([
         (model_low_condprob - truth_low_condprob)**2,
@@ -402,11 +402,11 @@ def loss_from_sumstats(sumstats, sumstats_aux):
 
     return jnp.mean(sqerrs)
 
-# NOTE: Define MultiDiff class using the sumstats + loss funcs we just defined
+# NOTE: Define multigrad class using the sumstats + loss funcs we just defined
 
 
 @dataclass
-class MyModel(multidiff.MultiDiffOnePointModel):
+class MyModel(multigrad.OnePointModel):
     sumstats_func_has_aux: bool = True  # override param default set by parent
 
     def calc_partial_sumstats_from_params(self, params, randkey):
@@ -447,7 +447,7 @@ if __name__ == "__main__":
         make_sumstat_plot(
             adam_results[-1],
             txt=f"Solution after {nsteps} evalulations", fig=figs[1])
-        plt.savefig("kdescent-multidiff-results.png")
+        plt.savefig("kdescent-multigrad-results.png")
     else:
         # All other ranks need to do this for make_sumstat_plot() to work...
         generate_model_into_mass_bins(guess, jax.random.key(13))
