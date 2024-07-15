@@ -6,6 +6,11 @@
 Welcome to kdescent's documentation!
 ====================================
 
+kdescent provides a general framework for comparing an N-dimensional
+distribution of a model population to that of a training dataset. It allows you
+to perform stochastic gradient descent over mini-batched KDE statistics. The
+code is open-source and available on `GitHub <https://github.com/AlanPearl/kdescent>`__.
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
