@@ -6,8 +6,8 @@ import jax.numpy as jnp
 
 class KCalc:
     def __init__(self, training_x, training_weights=None, num_kernels=20,
-                 bandwidth_factor=1.0, num_fourier_kernels=20,
-                 fourier_range_factor=10.0, comm=None):
+                 bandwidth_factor=0.4, num_fourier_kernels=20,
+                 fourier_range_factor=4.0, comm=None):
         """
         This KDE object is the fundamental building block of kdescent. It
         can be used to compare randomized evaluations of the PDF and ECF by
@@ -22,11 +22,11 @@ class KCalc:
         num_kernels : int, optional
             Number of KDE kernels to appriximate the PDF, by default 20
         bandwidth_factor : float, optional
-            Increase or decrease the kernel bandwidth, by default 1.0
+            Increase or decrease the kernel bandwidth, by default 0.4
         num_fourier_kernels : int, optional
             Number of points in k-space to evaluate the ECF, by default 20
         fourier_range_factor : float, optional
-            Increase or decrease the Fourier search space, by default 10.0
+            Increase or decrease the Fourier search space, by default 4.0
         comm : MPI Communicator, optional
             For parallel computing, this guarantees consistent kernel
             placements by all MPI ranks within the comm, by default None.
