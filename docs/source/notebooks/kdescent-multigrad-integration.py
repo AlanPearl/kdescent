@@ -446,7 +446,7 @@ if __name__ == "__main__":
             guess, txt="Initial guess", fig=figs[0])
         make_sumstat_plot(
             adam_results[-1],
-            txt=f"Solution after {nsteps} evalulations", fig=figs[1])
+            txt=f"Solution after {nsteps} evaluations", fig=figs[1])
         plt.savefig("kdescent-multigrad-results.png")
     else:
         # All other ranks need to do this for make_sumstat_plot() to work...
