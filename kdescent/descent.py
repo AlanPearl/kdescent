@@ -34,7 +34,7 @@ def adam(lossfunc, guess, nsteps=100, param_bounds=None,
         the "randkey" keyword argument, e.g. `lossfunc(params, randkey=key)`
     const_randkey : bool, optional
         By default (False), randkey is regenerated at each gradient descent
-        iteration, Remove this behavior by setting const_randkey=True
+        iteration. Remove this behavior by setting const_randkey=True
 
     Returns
     -------
