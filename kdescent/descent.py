@@ -11,7 +11,7 @@ from . import keygen
 
 
 def adam(lossfunc, guess, nsteps=100, param_bounds=None,
-         learning_rate=0.01, randkey=1, **other_kwargs):
+         learning_rate=0.01, randkey=1, const_randkey=False, **other_kwargs):
     """
     Perform gradient descent
 
@@ -32,6 +32,9 @@ def adam(lossfunc, guess, nsteps=100, param_bounds=None,
     randkey : int, optional
         Random seed or key, by default 1. If not None, lossfunc must accept
         the "randkey" keyword argument, e.g. `lossfunc(params, randkey=key)`
+    const_randkey : bool, optional
+        By default (False), randkey is regenerated at each gradient descent
+        iteration, Remove this behavior by setting const_randkey=True
 
     Returns
     -------
@@ -40,8 +43,9 @@ def adam(lossfunc, guess, nsteps=100, param_bounds=None,
         (nsteps, n_param)
     """
     if param_bounds is None:
-        return adam_unbounded(lossfunc, guess, nsteps,
-                              learning_rate, randkey, **other_kwargs)
+        return adam_unbounded(
+            lossfunc, guess, nsteps, learning_rate, randkey,
+            const_randkey, **other_kwargs)
 
     assert len(guess) == len(param_bounds)
     if hasattr(param_bounds, "tolist"):
@@ -54,20 +58,22 @@ def adam(lossfunc, guess, nsteps=100, param_bounds=None,
 
     init_uparams = apply_transforms(guess, param_bounds)
     uparams = adam_unbounded(
-        ulossfunc, init_uparams, nsteps, learning_rate,
-        randkey, **other_kwargs)
+        ulossfunc, init_uparams, nsteps, learning_rate, randkey,
+        const_randkey, **other_kwargs)
     params = apply_inverse_transforms(uparams.T, param_bounds).T
 
     return params
 
 
-def adam_unbounded(lossfunc, guess, nsteps=100,
-                   learning_rate=0.01, randkey=1, **other_kwargs):
+def adam_unbounded(lossfunc, guess, nsteps=100, learning_rate=0.01,
+                   randkey=1, const_randkey=False, **other_kwargs):
     kwargs = {**other_kwargs}
     if randkey is not None:
         randkey = keygen.init_randkey(randkey)
         randkey, key_i = jax.random.split(randkey)
         kwargs["randkey"] = key_i
+        if const_randkey:
+            randkey = None
     opt = optax.adam(learning_rate)
     solver = jaxopt.OptaxSolver(opt=opt, fun=lossfunc, maxiter=nsteps)
     state = solver.init_state(guess, **kwargs)
