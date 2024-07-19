@@ -11,3 +11,5 @@ API Reference
     :special-members: __init__
 
 .. autofunction:: kdescent.adam
+
+.. autofunction:: kdescent.bfgs

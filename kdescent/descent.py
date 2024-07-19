@@ -1,5 +1,6 @@
 from functools import partial
 
+import scipy.optimize
 import tqdm.auto as tqdm
 import numpy as np
 import jax.random
@@ -86,6 +87,59 @@ def adam_unbounded(lossfunc, guess, nsteps=100, learning_rate=0.01,
         params.append(params_i)
 
     return jnp.array(params)
+
+
+def bfgs(lossfunc, guess, maxsteps=100, param_bounds=None, randkey=None):
+    """
+    Run BFGS to descend the gradient and optimize the model parameters,
+    given an initial guess. Stochasticity is allowed if randkey is passed.
+
+    Parameters
+    ----------
+    lossfunc : callable
+        Function to be minimized via gradient descent. Must be compatible with
+        jax.jit and jax.grad. Must have signature f(params, **other_kwargs)
+    guess : array-like
+        The starting parameters.
+    maxsteps : int, optional
+        The maximum number of steps to take, by default 100.
+    param_bounds : Sequence, optional
+        Lower and upper bounds of each parameter of "shape" (ndim, 2). Pass
+        `None` as the bound for each unbounded parameter, by default None
+    randkey : int | PRNG Key, optional
+        Since BFGS requires a deterministic function, this key will be
+        passed to `calc_loss_and_grad_from_params()` as the "randkey" kwarg
+        as a constant at every iteration, by default None
+
+    Returns
+    -------
+    OptimizeResult (contains the following attributes):
+        message : str, describes reason of termination
+        success : boolean, True if converged
+        fun : float, minimum loss found
+        x : array of parameters at minimum loss found
+        jac : array of gradient of loss at minimum loss found
+        nfev : int, number of function evaluations
+        nit : int, number of gradient descent iterations
+    """
+    kwargs = {}
+    if randkey is not None:
+        randkey = keygen.init_randkey(randkey)
+        kwargs["randkey"] = randkey
+
+    pbar = tqdm.trange(maxsteps, desc="BFGS Gradient Descent Progress")
+
+    def callback(*_args, **_kwargs):
+        pbar.update()
+
+    loss_and_grad_fn = jax.value_and_grad(
+        lambda x: lossfunc(x, **kwargs))
+    results = scipy.optimize.minimize(
+        loss_and_grad_fn, x0=guess, method="L-BFGS-B", jac=True,
+        options=dict(maxiter=maxsteps), callback=callback, bounds=param_bounds)
+
+    pbar.close()
+    return results
 
 
 def apply_transforms(params, bounds):

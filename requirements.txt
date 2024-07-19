@@ -1,4 +1,5 @@
 jax
 jaxopt
 optax
+scipy
 tqdm
