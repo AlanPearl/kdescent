@@ -92,7 +92,7 @@ def adam_unbounded(lossfunc, guess, nsteps=100, learning_rate=0.01,
 def bfgs(lossfunc, guess, maxsteps=100, param_bounds=None, randkey=None):
     """
     Run BFGS to descend the gradient and optimize the model parameters,
-    given an initial guess. Stochasticity is allowed if randkey is passed.
+    given an initial guess. Stochasticity must be held fixed via a random key
 
     Parameters
     ----------
