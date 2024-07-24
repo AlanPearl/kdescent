@@ -7,7 +7,7 @@ import jax.numpy as jnp
 class KCalc:
     def __init__(self, training_x, training_weights=None, num_kernels=20,
                  bandwidth_factor=0.4, num_fourier_kernels=20,
-                 fourier_range_factor=4.0, comm=None):
+                 fourier_range_factor=4.0, covariant_kernels=True, comm=None):
         """
         This KDE object is the fundamental building block of kdescent. It
         can be used to compare randomized evaluations of the PDF and ECF by
@@ -27,6 +27,10 @@ class KCalc:
             Number of points in k-space to evaluate the ECF, by default 20
         fourier_range_factor : float, optional
             Increase or decrease the Fourier search space, by default 4.0
+        covariant_kernels : bool, optional
+            By default (True), kernels will align with the principle
+            components of the training data, which can blow up kernel count
+            values in nearly degenerate subspaces. Set False to prevent this
         comm : MPI Communicator, optional
             For parallel computing, this guarantees consistent kernel
             placements by all MPI ranks within the comm, by default None.
@@ -44,6 +48,7 @@ class KCalc:
         self.comm = comm
         self.num_kernels = num_kernels
         self.ndim = self.training_x.shape[1]
+        self.covariant_kernels = covariant_kernels
         self.bandwidth_factor = bandwidth_factor
         self.bandwidth = self._set_bandwidth(self.bandwidth_factor)
         self.kernelcov = self._bandwidth_to_kernelcov(self.bandwidth)
@@ -151,15 +156,28 @@ class KCalc:
         """Scott's rule bandwidth... multiplied by any factor you want!"""
         n = self.num_kernels
         d = self.training_x.shape[1]
-        return n ** (-1.0 / (d + 4)) * bandwidth_factor
+        return _set_bandwidth(n, d, bandwidth_factor)
 
     def _bandwidth_to_kernelcov(self, bandwidth):
         """
         Scale bandwidth by the empirical covariance matrix. This way we
         don't have to perform a PC transform for every single iteration.
         """
-        empirical_cov = jnp.cov(self.training_x, rowvar=False)
-        return empirical_cov * bandwidth**2
+        return _bandwidth_to_kernelcov(
+            self.training_x, bandwidth, self.covariant_kernels)
+
+
+@jax.jit
+def _set_bandwidth(n, d, bandwidth_factor):
+    return n ** (-1.0 / (d + 4)) * bandwidth_factor
+
+
+@partial(jax.jit, static_argnums=[2])
+def _bandwidth_to_kernelcov(training_x, bandwidth, covariant_kernels=True):
+    empirical_cov = jnp.cov(training_x, rowvar=False)
+    if not covariant_kernels:
+        empirical_cov = jnp.diag(jnp.diag(empirical_cov))
+    return empirical_cov * bandwidth**2
 
 
 @partial(jax.jit, static_argnums=[0])
